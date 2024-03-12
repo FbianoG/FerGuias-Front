@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='style.css'>
+    <!-- <script src='app.js' defer></script> -->
+    <title>Document</title>
+</head>
+
+<body>
+
+
+</body>
+
+
+<script>
+    const token = localStorage.getItem("Token")
+
+    if (!token) {
+        window.location.href = "index.html"
+    }
+
+    verifyToken()
+
+
+    async function verifyToken() {
+        const response = await fetch("https://ferguias-back.onrender.com/getData", {
+            method: "POST",
+            body: JSON.stringify({ token }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        const data = await response.json()
+        if (data.auth === true) {
+            createFormGuia()
+        } else {
+            window.location.href = "index.html"
+        }
+    }
+
+    function createFormGuia() {
+        const newForm = document.createElement("div")
+        newForm.classList = "formGuia"
+        newForm.innerHTML = createFormHTML()
+        document.querySelectorAll('body')[0].appendChild(newForm)
+        generateScrips()
+    }
+
+    function createFormHTML() {
+        const HTML = `
+    <div class="dadosPaciente card">
+            <h4>Dados do Paciente</h4>
+            <label for="">Nome do Paciente:</label>
+            <input type="text" id="nome">
+            <label for="">Nº da Carteira</label>
+            <input type="number" id="carteira" >
+            <label for="">Plano:</label>
+            <select name="" id="plano">
+                <option value=""></option>
+                <option value="amil">Amil</option>
+                <option value="assim">Assim</option>
+                <option value="caberj">Caberj</option>
+                <option value="fio">Fio Saúde</option>
+                <option value="golden">Gonden Cross</option>
+                <option value="intermédica">Intermédica</option>
+                <option value="ipalerj">Ipalerj</option>
+                <option value="petrobras">Petrobras</option>
+                <option value="vale">Vale</option>
+            </select>
+        </div>
+        <div class="dadosAutorizacao card">
+            <h4>Dados da Autorização</h4>
+            <label for="">Nº da Guia:</label>
+            <input type="text" id="guia">
+            <label for="">Nº da Senha:</label>
+            <input type="text" id="senha">
+            <label for="">Médico Solicitante:</label>
+            <input type="text" id="medico">
+            <label for="">CRM do Médico</label>
+            <input type="number" id="crm">
+            <label for="">Data Solicitação:</label>
+            <input type="date" class="data" id="dataSol">
+            <label for="" class="labelMin">Data Autorização:</label>
+            <input type="date" class="data" id="dataAut">
+        </div>
+        <div class="dadosinternacao card">
+            <h4>Dados da Internação</h4>
+            <label for="">Tipo de Internação:</label>
+            <select name="" id="tipo">
+                <option value="1">Clínica</option>
+                <option value="2">Cirúrgica</option>
+                <option value="3">Ginecológica</option>
+                <option value="4">Pediátrica</option>
+            </select>
+            <label for="">Caráter da Internação:</label>
+            <select name="" id="carater">
+                <option value="u">Urgência</option>
+                <option value="e">Eletivo</option>
+            </select>
+            <label for="">Acomodação:</label>
+            <select name="" id="leito">
+                <option value="apt">Quarto</option>
+                <option value="enf">Enfermaria</option>
+                <option value="uti">UTI</option>
+            </select>
+            <label for="">Diárias:</label>
+            <select name="" id="diaria">
+                <option value="0">0</option>
+                <option value="1" selected>1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+        </div>
+        <div class="dadosProcedimentos card">
+            <h4>Procedimentos</h4>
+            <div class="listProcedimentos">
+                <div class="procedimento1 procedimentos">
+                    <label for="">Cód. Procedimento:</label>
+                    <input type="text" id="proced1">
+                    <label for="">Nome do Procedimento:</label>
+                    <input type="text" id="des1">
+                    <label for="">Quantidade</label>
+                    <select name="" id="qtd1">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </div>
+            <label for="">Adicionar Procedimento:</label>
+            <button id="btnAdd">Adicionar</button>
+        </div>
+        <button class="gerar">Imprimir</button>
+    `
+
+        return HTML
+    }
+
+
+
+
+
+
+    function generateScrips() {
+
+        let codTuss = []
+        let btnAdd = document.querySelector('#btnAdd')
+        let card = document.querySelectorAll('.dadosProcedimentos')[0]
+        let btnGerar = document.querySelectorAll('.gerar')[0]
+        let btnSelect = document.querySelectorAll('.btnSelect')[0]
+        let typeSelect = document.querySelectorAll('#typeGuiaSelect')[0]
+
+        let dataPac = document.querySelectorAll('.dadosPaciente')[0]
+        let dataAut = document.querySelectorAll('.dadosAutorizacao')[0]
+        let dataInt = document.querySelectorAll('.dadosinternacao')[0]
+        let dataProced = document.querySelectorAll('.dadosProcedimentos')[0]
+        let dataConfirm = document.querySelectorAll('.dadosConfirmação')[0]
+
+
+
+        // Eventos
+
+
+        btnAdd.addEventListener('click', createInput) // Adiciona mais campos para inclusão de novos procedimentos
+        card.addEventListener('keyup', fillInputProcedure) // Preenche automáticamente o campo "procedimentos" de acordo com o código digitado
+        btnGerar.addEventListener('click', gerar) // Envia os dados para o cachê e redireciona para a página da guia
+
+
+
+
+
+
+        // Funções
+
+        getTuss()
+
+        async function getTuss() { // Puxa dados do arquivo "JSON" da tabela Tuss
+            const tuss = await fetch("./tabela_22.json")
+            const Data = await tuss.json()
+            codTuss = Data
+        }
+
+        function fillInputProcedure(e) { // Preenche automáticamente o campo "procedimentos" de acordo com o código digitado
+            let input = e.target
+            if (input.value.length == 8) {
+                let desProcedimento = e.target.parentElement.children[3]
+                let findValue = codTuss.rows.find(element => {
+                    return element.codigo == input.value
+                })
+                if (findValue) {
+                    desProcedimento.value = findValue.procedimento
+                    if (findValue.procedimento == '10104020') {
+                        e.target.parentElement.children[5].value = 2
+                    }
+                }
+            }
+        }
+
+        function createInput() { // Adiciona mais campos para inclusão de novos procedimentos
+            let list = document.querySelectorAll('.listProcedimentos')[0]
+            if (list.children.length < 5) {
+                let num = list.children.length + 1
+                let newProcedimento = document.createElement('div')
+                newProcedimento.classList = `procedimento${num} procedimentos`
+                newProcedimento.innerHTML = createInputHTML(num) // cria html dos "inputs"
+                list.appendChild(newProcedimento)
+                window.scrollTo({
+                    top: window.scrollY + 1000, behavior: 'smooth'
+                })
+            }
+        }
+
+        function createInputHTML(e) { // cria html dos "inputs"
+            const html = `
+                <label for="">Cód. Procedimento:</label>
+                <input type="text" id='proced${e}'>
+                <label for="">Nome do Procedimento:</label>
+                <input type="text" id='des${e}'>
+                <label for="">Quantidade</label>
+                <select name="" id="qtd${e}">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            `
+            return html
+        }
+
+        async function gerar() { // // Envia os dados para o cachê e redireciona para a página da "guiaint"
+
+            let name = document.querySelector('#nome').value.toLowerCase()
+            let date = document.querySelector('#dataAut').value
+            let tuss = document.querySelector('#des1').value
+
+            const response = await fetch("https://ferguias-back.onrender.com/registerGuia", {
+                method: "POST",
+                body: JSON.stringify({ name, date, tuss, token }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            if (response.status != 201) {
+                console.log("Guia não foi gerada. Tente novamente!")
+                return
+            }
+
+            let dadosPaciente = {}
+            dadosPaciente.nome = document.querySelector('#nome').value.toLowerCase()
+            dadosPaciente.carteira = document.querySelector('#carteira').value
+            dadosPaciente.plano = document.querySelector('#plano').value
+            dadosPaciente.guia = document.querySelector('#guia').value
+            dadosPaciente.senha = document.querySelector('#senha').value
+            dadosPaciente.medico = document.querySelector('#medico').value.toLowerCase()
+            dadosPaciente.crm = document.querySelector('#crm').value
+            dadosPaciente.dataSol = document.querySelector('#dataSol').value
+            dadosPaciente.dataAut = document.querySelector('#dataAut').value
+            dadosPaciente.tipo = document.querySelector('#tipo').value
+            dadosPaciente.carater = document.querySelector('#carater').value
+            dadosPaciente.leito = document.querySelector('#leito').value
+            dadosPaciente.diaria = document.querySelector('#diaria').value
+            let list = document.querySelectorAll('.listProcedimentos')[0]
+            dadosPaciente.proced = []
+            dadosPaciente.des = []
+            dadosPaciente.qtd = []
+            for (let i = 1; i <= list.children.length; i++) {
+                dadosPaciente.proced.push(document.querySelector(`#proced${i}`).value)
+                dadosPaciente.des.push(document.querySelector(`#des${i}`).value)
+                dadosPaciente.qtd.push(document.querySelector(`#qtd${i}`).value)
+            }
+            localStorage.setItem('dadosPaciente', JSON.stringify(dadosPaciente))
+            window.open('guiaint.html', '_blank')
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+
+
+
+</html>
